@@ -35,7 +35,7 @@ sub new {
 
     $Self->{ConfigParams} = [qw(
         ObjectType ObjectTypeName FieldType FieldTypeName ValidID Link
-        PossibleNone AgentValidity
+        PossibleNone AgentValidity RoleFilter
     )];
 
     return $Self;
@@ -513,7 +513,19 @@ sub _ShowScreen {
 
     # define as 0 to get the real value in the HTML
     my $ValueCounter = 0;
-
+    my %roleList = $Kernel::OM->Get('Kernel::System::Group')->RoleList(Valid => 1);
+    #my %roleList = $Kernel::OM->Get('Kernel::System::Group')->PermissionRoleUserGet(        RoleID => 1,    );
+    #    use Data::Dumper;
+    #print STDERR "RoleList Dump:";
+    #print STDERR Dumper \%roleList;
+    $Param{RoleFilterSelect} = $LayoutObject->BuildSelection(
+        Data => \%roleList,
+        Name        => 'RoleFilter',
+        SelectedID  => $Param{RoleFilter},
+        Translation => 1,
+        PossibleNone => 1,
+        Class       => 'W50pc',
+    );
     # create treeview option list
     $Param{AgentValiditySelect} = $LayoutObject->BuildSelection(
         Data => {
