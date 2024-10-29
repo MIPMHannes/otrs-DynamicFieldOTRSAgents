@@ -23,6 +23,7 @@ sub Data {
 
     $Lang->{'Valid agents only'} = 'Nur gültige Agenten';
     $Lang->{'PossibleNone'}      = 'Leerer Wert möglich';
+    $Lang->{'Filter Role'}        = 'Auf Rolle filtern';
 
     return 1;
 }
