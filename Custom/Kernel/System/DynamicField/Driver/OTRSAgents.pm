@@ -21,6 +21,7 @@ our @ObjectDependencies = (
     'Kernel::System::DynamicFieldValue',
     'Kernel::System::Main',
     'Kernel::System::User',
+    'Kernel::System::Group',
 );
 
 =head1 NAME
@@ -166,19 +167,71 @@ sub ColumnFilterValuesGet {
 
     return $Self->SUPER::ColumnFilterValuesGet( %Param );
 }
+sub PermissionRoleUserGet {
+    my ( $Self, %Param ) = @_;
+    my $go = $Kernel::OM->Get('Kernel::System::Group');
+    # check needed stuff
+    if ( !$Param{RoleID} ) {
+        $Kernel::OM->Get('Kernel::System::Log')->Log(
+            Priority => 'error',
+            Message  => "Need RoleID!",
+        );
+        return;
+    }
 
+    # get valid role list
+    my %RoleList = $go->RoleList( Valid => 1 );
+
+    return if !$RoleList{ $Param{RoleID} };
+
+    # get permission data
+    my %Permissions = $go->_DBRoleUserGet(
+        Type => 'RoleUser',
+    );
+
+    return if !$Permissions{ $Param{RoleID} };
+    return if ref $Permissions{ $Param{RoleID} } ne 'ARRAY';
+
+    # extract users
+    my $UsersRaw = $Permissions{ $Param{RoleID} } || [];
+
+    # get valid user list
+    my %UserList = $Kernel::OM->Get('Kernel::System::User')->UserList(
+        Type => 'Long',
+        Valid => 1,
+    );
+
+    # calculate users
+    my %Users;
+    USERID:
+    for my $UserID ( @{$UsersRaw} ) {
+
+        next USERID if !$UserID;
+        next USERID if !$UserList{$UserID};
+
+        $Users{$UserID} = $UserList{$UserID};
+    }
+
+    return %Users;
+}
 sub PossibleValuesGet {
     my ($Self, %Param) = @_;
+    my %List = ();
 
-    my $UserObject = $Kernel::OM->Get('Kernel::System::User');
-
+ 
     my $Config = $Param{DynamicFieldConfig}->{Config} || {};
-
-    my %List = $UserObject->UserList(
-        Type          => 'Long',
-        Valid         => 1,
+    if ($Config->{RoleFilter}){
+            %List = $Self->PermissionRoleUserGet(
+            RoleID => $Config->{RoleFilter},
+        );
+        }else{
+    my $UserObject = $Kernel::OM->Get('Kernel::System::User');
+     %List = $UserObject->UserList(
+       Type          => 'Long',
+        Valid         => $Config->{AgentValidity} || 1,
         NoOutOfOffice => 1,
-    );
+    );}
+    
 
     my $FieldPossibleNone;
     if ( defined $Param{OverridePossibleNone} ) {
@@ -194,7 +247,7 @@ sub PossibleValuesGet {
     }
 
 
-    return \%List;
+    return  \%List;
 }
 
 1;
