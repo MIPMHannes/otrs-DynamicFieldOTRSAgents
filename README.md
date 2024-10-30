@@ -1,5 +1,6 @@
 With this extension you can create custom Agent Selection Dynamic Fields.
 
+## Possible Options
 ### Filter Role
 Choose a role. Only Members of this role will be displayed.
 You can select  `-` all Agents will be shown.
